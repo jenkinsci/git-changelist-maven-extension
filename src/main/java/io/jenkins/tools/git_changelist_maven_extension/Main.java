@@ -22,11 +22,10 @@
  * THE SOFTWARE.
  */
 
-package io.jenkins.tools.git_version_setter;
+package io.jenkins.tools.git_changelist_maven_extension;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
@@ -40,9 +39,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.revwalk.filter.RevFilter;
 
-@Component(role=AbstractMavenLifecycleParticipant.class, hint="git_version_setter")
+@Component(role=AbstractMavenLifecycleParticipant.class, hint="git-changelist-maven-extension")
 public class Main extends AbstractMavenLifecycleParticipant {
 
     @Requirement
@@ -50,11 +48,9 @@ public class Main extends AbstractMavenLifecycleParticipant {
 
     @Override
     public void afterSessionStart(MavenSession session) throws MavenExecutionException {
-        List<String> profiles = session.getRequest().getActiveProfiles();
-        if (profiles.contains("incrementals") && profiles.contains("jenkins-release")) {
-            Properties props = session.getRequest().getUserProperties();
+        Properties props = session.getRequest().getUserProperties();
+        if ("true".equals(props.getProperty("set.changelist"))) {
             if (!props.containsKey("changelist")) {
-                log.info("Setting the `changelist` property");
                 File dir = session.getRequest().getMultiModuleProjectDirectory();
                 log.debug("running in " + dir);
                 String hash;
@@ -92,7 +88,7 @@ public class Main extends AbstractMavenLifecycleParticipant {
                 log.info("Declining to override the `changelist` property");
             }
         } else {
-            log.debug("Skipping Git version setting unless run in -Pincrementals,jenkins-release");
+            log.debug("Skipping Git version setting unless run with -Dset.changelist");
         }
     }
 
