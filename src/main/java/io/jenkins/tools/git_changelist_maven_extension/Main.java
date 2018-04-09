@@ -40,6 +40,13 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
+/**
+ * Sets a {@code changelist} property to a value based on the Git checkout.
+ * {@code -Dset.changelist} then becomes equivalent to:
+ * {@code -Dchangelist=-rc$(git rev-list --first-parent --count HEAD).$(git rev-parse --short=12 HEAD)}
+ * @see <a href="https://maven.apache.org/maven-ci-friendly.html">Maven CI Friendly Versions</a>
+ * @see <a href="https://maven.apache.org/docs/3.3.1/release-notes.html#Core_Extensions">Core Extensions</a>
+ */
 @Component(role=AbstractMavenLifecycleParticipant.class, hint="git-changelist-maven-extension")
 public class Main extends AbstractMavenLifecycleParticipant {
 
