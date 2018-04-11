@@ -30,6 +30,7 @@ import java.util.Properties;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -96,6 +97,20 @@ public class Main extends AbstractMavenLifecycleParticipant {
             }
         } else {
             log.debug("Skipping Git version setting unless run with -Dset.changelist");
+        }
+    }
+
+    @Override
+    public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
+        Properties props = session.getRequest().getUserProperties();
+        if ("true".equals(props.getProperty("set.changelist"))) {
+            String changelist = props.getProperty("changelist");
+            for (MavenProject project : session.getProjects()) {
+                String version = project.getVersion();
+                if (!version.contains(changelist)) {
+                    log.warn(project.getId() + " does not seem to be including ${changelist} in its <version>");
+                }
+            }
         }
     }
 
