@@ -27,6 +27,8 @@ package io.jenkins.tools.git_changelist_maven_extension;
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
@@ -35,6 +37,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -64,8 +67,13 @@ public class Main extends AbstractMavenLifecycleParticipant {
                 String hash;
                 int count = 0;
                 try (Git git = Git.open(dir)) {
-                    if (!git.status().call().isClean()) {
-                        log.warn("Git repository seems to be dirty; commit before deploying");
+                    Status status = git.status().call();
+                    if (!status.isClean()) {
+                        // Could consider instead making this append a timestamp baased on the most recent file modification.
+                        Set<String> paths = new TreeSet<>(status.getUncommittedChanges());
+                        paths.addAll(status.getUntracked());
+                        // Note that `git st` does not care about untracked _folders_ so long as there are no relevant _files_ inside them.
+                        throw new MavenExecutionException("Make sure `git status -s` is empty before using -Dset.changelist: " + paths, (Throwable) null);
                     }
                     Repository repo = git.getRepository();
                     ObjectId head = repo.resolve("HEAD");
