@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.kohsuke</groupId>
+        <artifactId>pom</artifactId>
+        <version>19</version>
+        <relativePath />
+    </parent>
     <groupId>io.jenkins.tools</groupId>
     <artifactId>git-changelist-maven-extension</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-alpha-1-SNAPSHOT</version>
     <name>Git Changelist Maven Extension</name>
     <description>Maven extension which can set the special changelist user property according to Git metadata.</description>
     <licenses>
@@ -17,6 +23,21 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
+    <scm>
+        <!-- TODO pending jenkinsci or jenkins-infra hosting -->
+        <connection>scm:git:git@github.com/jglick/${project.artifactId}.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jglick/${project.artifactId}.git</developerConnection>
+        <url>https://github.com/jglick/${project.artifactId}</url>
+        <tag>HEAD</tag>
+    </scm>
+    <!-- TODO consider setting up site documentation:
+    <distributionManagement>
+        <site>
+            <id>github-pages</id>
+            <url>gitsite:git@github.com/jenkinsci/${project.artifactId}.git</url>
+        </site>
+    </distributionManagement>
+    -->
     <build>
         <plugins>
             <plugin>
