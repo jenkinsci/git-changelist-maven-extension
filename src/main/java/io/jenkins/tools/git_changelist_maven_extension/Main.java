@@ -48,6 +48,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
  * Sets a {@code changelist} property to a value based on the Git checkout.
  * {@code -Dset.changelist} then becomes equivalent to:
  * {@code -Dchangelist=-rc$(git rev-list --first-parent --count HEAD).$(git rev-parse --short=12 HEAD)}
+ * <p>Also does the equivalent of: {@code -DscmTag=$(git rev-parse HEAD)}
  * @see <a href="https://maven.apache.org/maven-ci-friendly.html">Maven CI Friendly Versions</a>
  * @see <a href="https://maven.apache.org/docs/3.3.1/release-notes.html#Core_Extensions">Core Extensions</a>
  */
@@ -61,10 +62,10 @@ public class Main extends AbstractMavenLifecycleParticipant {
     public void afterSessionStart(MavenSession session) throws MavenExecutionException {
         Properties props = session.getRequest().getUserProperties();
         if ("true".equals(props.getProperty("set.changelist"))) {
-            if (!props.containsKey("changelist")) {
+            if (!props.containsKey("changelist") && !props.containsKey("scmTag")) {
                 File dir = session.getRequest().getMultiModuleProjectDirectory();
                 log.debug("running in " + dir);
-                String hash;
+                String fullHash, hash;
                 int count = 0;
                 try (Git git = Git.open(dir)) {
                     Status status = git.status().call();
@@ -77,6 +78,7 @@ public class Main extends AbstractMavenLifecycleParticipant {
                     }
                     Repository repo = git.getRepository();
                     ObjectId head = repo.resolve("HEAD");
+                    fullHash = head.name();
                     hash = head.abbreviate(12).name();
                     try (RevWalk walk = new RevWalk(repo)) {
                         RevCommit c = walk.parseCommit(head);
@@ -98,10 +100,11 @@ public class Main extends AbstractMavenLifecycleParticipant {
                 }
                 // should match: -rc$(git rev-list --first-parent --count HEAD).$(git rev-parse --short=12 HEAD)
                 String value = "-rc" + count + "." + hash;
-                log.info("Setting: -Dchangelist=" + value);
+                log.info("Setting: -Dchangelist=" + value + " -DscmTag=" + fullHash);
                 props.setProperty("changelist", value);
+                props.setProperty("scmTag", fullHash);
             } else {
-                log.info("Declining to override the `changelist` property");
+                log.info("Declining to override the `changelist` or `scmTag` properties");
             }
         } else {
             log.debug("Skipping Git version setting unless run with -Dset.changelist");
