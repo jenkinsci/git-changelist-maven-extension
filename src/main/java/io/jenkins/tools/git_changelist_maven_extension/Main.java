@@ -26,6 +26,13 @@ package io.jenkins.tools.git_changelist_maven_extension;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -55,6 +62,8 @@ import org.eclipse.jgit.revwalk.RevWalk;
 @Component(role=AbstractMavenLifecycleParticipant.class, hint="git-changelist-maven-extension")
 public class Main extends AbstractMavenLifecycleParticipant {
 
+    private static final int ABBREV_LENGTH = 12;
+
     @Requirement
     private Logger log;
 
@@ -63,10 +72,11 @@ public class Main extends AbstractMavenLifecycleParticipant {
         Properties props = session.getRequest().getUserProperties();
         if ("true".equals(props.getProperty("set.changelist"))) {
             if (!props.containsKey("changelist") && !props.containsKey("scmTag")) {
+                long start = System.nanoTime();
                 File dir = session.getRequest().getMultiModuleProjectDirectory();
                 log.debug("running in " + dir);
                 String fullHash, hash;
-                int count = 0;
+                int count;
                 try (Git git = Git.open(dir)) {
                     Status status = git.status().call();
                     if (!status.isClean()) {
@@ -79,26 +89,41 @@ public class Main extends AbstractMavenLifecycleParticipant {
                     Repository repo = git.getRepository();
                     ObjectId head = repo.resolve("HEAD");
                     fullHash = head.name();
-                    hash = head.abbreviate(12).name();
+                    hash = head.abbreviate(ABBREV_LENGTH).name();
                     try (RevWalk walk = new RevWalk(repo)) {
-                        RevCommit c = walk.parseCommit(head);
-                        // https://stackoverflow.com/a/33054511/12916 RevWalk does not seem to provide any easy equivalent to --first-parent, so cannot simply walk.markStart(c) and iterate
-                        while (c != null) {
-                            count++;
-                            if (log.isDebugEnabled()) {
-                                log.debug("found commit: " + c.getShortMessage());
+                        RevCommit headC = walk.parseCommit(head);
+                        count = revCount(walk, headC);
+                        { // Look for repository commits reachable from HEAD that would clash.
+                            Map<String,List<RevCommit>> encountered = new HashMap<>();
+                            walk.markStart(headC);
+                            int commitCount = 0;
+                            for (RevCommit c : walk) {
+                                commitCount++;
+                                String abbreviated = c.getId().abbreviate(ABBREV_LENGTH).name();
+                                List<RevCommit> earlier = encountered.get(abbreviated);
+                                if (earlier == null) {
+                                    earlier = new ArrayList<>(1);
+                                    earlier.add(c);
+                                    encountered.put(abbreviated, earlier);
+                                } else {
+                                    int thisCount = revCount(walk, c);
+                                    for (RevCommit other : earlier) {
+                                        int otherCount = revCount(walk, other);
+                                        if (otherCount == thisCount) {
+                                            throw new MavenExecutionException(summarize(c) + " clashes with " + summarize(other) + " as they would both be identified as " + thisCount + "." + abbreviated, (Throwable) null);
+                                        } else {
+                                            log.info(summarize(c) + " would clash with " + summarize(other) + " except they have differing revcounts: " + thisCount + " vs. " + otherCount);
+                                        }
+                                    }
+                                }
                             }
-                            if (c.getParentCount() == 0) {
-                                c = null;
-                            } else {
-                                c = walk.parseCommit(c.getParent(0));
-                            }
+                            log.debug("Analyzed " + commitCount + " commits for clashes");
                         }
                     }
                 } catch (IOException | GitAPIException x) {
                     throw new MavenExecutionException("Git operations failed", x);
                 }
-                // should match: -rc$(git rev-list --first-parent --count HEAD).$(git rev-parse --short=12 HEAD)
+                log.debug("Spent " + (System.nanoTime() - start) / 1000 / 1000 + "ms on calculations");
                 String value = "-rc" + count + "." + hash;
                 log.info("Setting: -Dchangelist=" + value + " -DscmTag=" + fullHash);
                 props.setProperty("changelist", value);
@@ -108,6 +133,23 @@ public class Main extends AbstractMavenLifecycleParticipant {
             }
         } else {
             log.debug("Skipping Git version setting unless run with -Dset.changelist");
+        }
+    }
+
+    private static String summarize(RevCommit c) {
+        return c.getId().name() + " “" + c.getShortMessage() + "” " + DateTimeFormatter.ISO_LOCAL_DATE.format(Instant.ofEpochSecond(c.getCommitTime()).atZone(ZoneId.systemDefault()));
+    }
+
+    private static int revCount(RevWalk walk, RevCommit c) throws IOException, GitAPIException {
+        int count = 0;
+        // https://stackoverflow.com/a/33054511/12916 RevWalk does not seem to provide any easy equivalent to --first-parent, so cannot simply walk.markStart(c) and iterate
+        while (true) {
+            count++;
+            if (c.getParentCount() == 0) {
+                return count;
+            } else {
+                c = walk.parseCommit(c.getParent(0));
+            }
         }
     }
 
