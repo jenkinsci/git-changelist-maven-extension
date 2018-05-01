@@ -9,7 +9,7 @@
     </parent>
     <groupId>io.jenkins.tools</groupId>
     <artifactId>git-changelist-maven-extension</artifactId>
-    <version>1.0-alpha-4-SNAPSHOT</version>
+    <version>1.0-beta-1-SNAPSHOT</version>
     <name>Git Changelist Maven Extension</name>
     <description>Maven extension which can set the special changelist user property according to Git metadata.</description>
     <licenses>
@@ -22,10 +22,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <scm>
-        <!-- TODO pending jenkinsci or jenkins-infra hosting -->
-        <connection>scm:git:git@github.com/jglick/${project.artifactId}.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jglick/${project.artifactId}.git</developerConnection>
-        <url>https://github.com/jglick/${project.artifactId}</url>
+        <connection>scm:git:git@github.com/jenkinsci/${project.artifactId}.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
+        <url>https://github.com/jenkinsci/${project.artifactId}</url>
         <tag>HEAD</tag>
     </scm>
     <!-- TODO consider setting up site documentation:
