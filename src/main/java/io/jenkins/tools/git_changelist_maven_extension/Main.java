@@ -62,6 +62,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 @Component(role=AbstractMavenLifecycleParticipant.class, hint="git-changelist-maven-extension")
 public class Main extends AbstractMavenLifecycleParticipant {
 
+    private static final String IGNORE_DIRT = "ignore.dirt";
     private static final int ABBREV_LENGTH = 12;
 
     @Requirement
@@ -83,8 +84,13 @@ public class Main extends AbstractMavenLifecycleParticipant {
                         // Could consider instead making this append a timestamp baased on the most recent file modification.
                         Set<String> paths = new TreeSet<>(status.getUncommittedChanges());
                         paths.addAll(status.getUntracked());
+                        String error = "Make sure `git status -s` is empty before using -Dset.changelist: " + paths;
                         // Note that `git st` does not care about untracked _folders_ so long as there are no relevant _files_ inside them.
-                        throw new MavenExecutionException("Make sure `git status -s` is empty before using -Dset.changelist: " + paths, (Throwable) null);
+                        if ("true".equals(props.getProperty(IGNORE_DIRT))) {
+                            log.warn(error);
+                        } else {
+                            throw new MavenExecutionException(error + " (use -D" + IGNORE_DIRT + " to make this nonfatal)", (Throwable) null);
+                        }
                     }
                     Repository repo = git.getRepository();
                     ObjectId head = repo.resolve("HEAD");
