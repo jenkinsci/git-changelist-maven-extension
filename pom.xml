@@ -9,7 +9,7 @@
     </parent>
     <groupId>io.jenkins.tools</groupId>
     <artifactId>git-changelist-maven-extension</artifactId>
-    <version>1.0-beta-2-SNAPSHOT</version>
+    <version>1.0-beta-2</version>
     <name>Git Changelist Maven Extension [relocated]</name>
     <licenses>
         <license>
@@ -21,7 +21,7 @@
         <connection>scm:git:git@github.com/jenkinsci/${project.artifactId}.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
         <url>https://github.com/jenkinsci/${project.artifactId}</url>
-        <tag>HEAD</tag>
+        <tag>git-changelist-maven-extension-1.0-beta-2</tag>
     </scm>
     <distributionManagement>
         <relocation>
