@@ -10,64 +10,23 @@
     <groupId>io.jenkins.tools</groupId>
     <artifactId>git-changelist-maven-extension</artifactId>
     <version>1.0-beta-2-SNAPSHOT</version>
-    <name>Git Changelist Maven Extension</name>
-    <description>Maven extension which can set the special changelist user property according to Git metadata.</description>
+    <name>Git Changelist Maven Extension [relocated]</name>
     <licenses>
         <license>
             <name>MIT License</name>
             <url>http://opensource.org/licenses/MIT</url>
         </license>
     </licenses>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
     <scm>
         <connection>scm:git:git@github.com/jenkinsci/${project.artifactId}.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
         <url>https://github.com/jenkinsci/${project.artifactId}</url>
         <tag>HEAD</tag>
     </scm>
-    <!-- TODO consider setting up site documentation:
     <distributionManagement>
-        <site>
-            <id>github-pages</id>
-            <url>gitsite:git@github.com/jenkinsci/${project.artifactId}.git</url>
-        </site>
+        <relocation>
+            <groupId>io.jenkins.tools.incrementals</groupId>
+            <message>JENKINS-51187: git-changelist-maven-extension moved to incrementals-tools</message>
+         </relocation>
     </distributionManagement>
-    -->
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.plexus</groupId>
-                <artifactId>plexus-component-metadata</artifactId>
-                <version>1.7.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate-metadata</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>3.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit</artifactId>
-            <version>4.9.0.201710071750-r</version>
-        </dependency>
-    </dependencies>
 </project>
